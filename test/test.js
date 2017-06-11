@@ -1,6 +1,7 @@
 var expect = require('chai').expect;
 var server = require('../web/basic-server.js');
 var fs = require('fs');
+var promiseArchive = require('../helpers/promisified-archive-helpers');
 var archive = require('../helpers/archive-helpers');
 var path = require('path');
 var supertest = require('supertest');
@@ -29,7 +30,7 @@ describe('server', function() {
     describe('GET', function () {
       it('should return the content of a website from the archive', function (done) {
         var fixtureName = 'www.google.com';
-        var fixturePath = archive.paths.archivedSites + '/' + fixtureName;
+        var fixturePath = promiseArchive.paths.archivedSites + '/' + fixtureName;
 
         // Create or clear the file.
         var fd = fs.openSync(fixturePath, 'w');
@@ -57,7 +58,7 @@ describe('server', function() {
         var url = 'www.example.com';
 
         // Reset the test file and process request
-        fs.closeSync(fs.openSync(archive.paths.list, 'w'));
+        fs.closeSync(fs.openSync(promiseArchive.paths.list, 'w'));
 
         request
           .post('/')
@@ -65,7 +66,7 @@ describe('server', function() {
           .send({ url: url })
           .expect(302, function (err) {
             if (!err) {
-              var fileContents = fs.readFileSync(archive.paths.list, 'utf8');
+              var fileContents = fs.readFileSync(promiseArchive.paths.list, 'utf8');
               expect(fileContents).to.equal(url + '\n');
             }
 

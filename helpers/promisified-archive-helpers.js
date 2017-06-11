@@ -2,6 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
 var request = require('request');
+var Promise = require('bluebird');
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -26,34 +27,55 @@ exports.initialize = function(pathsObj) {
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
 
-exports.readListOfUrls = function(callback) {
-  fs.readFile(exports.paths.list, 'utf8', function(err, data) {
-    if (err) {
-      throw err;
-    }
-    if (callback) {
-      callback(data.split('\n'));
-    }
+exports.readListOfUrls = function() {
+  return new Promise(function(resolve, reject) {
+    fs.readFile(exports.paths.list, 'utf8', function(err, data) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data.split('\n'));
+      }
+    });
   });
 };
 
-exports.isUrlInList = function(url, callback) {
-  exports.readListOfUrls(function(array) {
-    callback(array.includes(url));
+exports.isUrlInList = function(url) {
+  return new Promise(function(resolve, reject) {
+    exports.readListOfUrls()
+    .then(function(list) {
+      if (!list.includes(url)) {
+        reject(false);
+      } else {
+        resolve(true);
+      }
+    })
+    .catch(function(err) {
+      reject(err);
+    });
   });
 };
 
-exports.addUrlToList = function(url, callback) {
-  fs.appendFile(exports.paths.list, url + '\n', 'utf8', function(err) {
-    if (err) {
-      throw err;
+exports.addUrlToList = function(url) {
+  return new Promise(function(resolve, reject) {
+    fs.appendFile(exports.paths.list, url + '\n', 'utf8', function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve('Successfully added URL to list');
+      }
+    });
+  });
+};
+
+exports.isUrlArchived = function(url) {
+  return new Promise(function(resolve, reject) {
+    var archived = fs.existsSync(exports.paths.archivedSites +  '/' + url);
+    if (!archived) {
+      reject(false);
+    } else {
+      resolve(true);
     }
-    callback(url);
   });
-};
-
-exports.isUrlArchived = function(url, callback) {
-  callback(fs.existsSync(exports.paths.archivedSites +  '/' + url));
 };
 
 exports.downloadUrls = function(urls) {
